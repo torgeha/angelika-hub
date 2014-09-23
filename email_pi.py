@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 import datetime
 
 #Append additional recipients to this list
-to = ['torgeha@gmail.com', 'david.hovind@gmail.com']
+to = ['email@placeholder.com', 'email2@placeholder.com']
 gmail_user = 'angelikarasp@gmail.com'
 gmail_password = 'gruppe11'
 smtpserver = smtplib.SMTP('smtp.gmail.com', 587)
