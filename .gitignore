@@ -1,0 +1,8 @@
+#Default excludes
+res
+*.ang
+
+#Archive files
+*.zip
+*.rar
+*.7z
