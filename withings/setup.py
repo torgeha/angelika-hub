@@ -10,7 +10,7 @@ setup(
     url="https://github.com/maximebf/python-withings",
     license = "MIT License",
     packages = ['withings'],
-    install_requires = ['requests', 'requests-oauth'],
+    install_requires = ['requests', 'requests-oauthlib'],
     scripts=['bin/withings'],
     keywords="withings",
     zip_safe = True
