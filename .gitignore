@@ -6,3 +6,6 @@ res
 *.zip
 *.rar
 *.7z
+
+#pycharm excludes
+.idea
