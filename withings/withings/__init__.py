@@ -183,11 +183,19 @@ class WithingsMeasureGroup(object):
                 return m['value'] * pow(10, m['unit'])
         return None
 
+    def __repr__(self):
+        return str(self. data)
+
 
 class WithingsActivityGroup(object):
     def __init__(self, data):
-        self.data = data
+        self.activities = data
         self.date = datetime.datetime.strptime(data['date'], "%Y-%m-%d").date()
+        del self.activities['date']
+        del self.activities['timezone']
 
     def get_activity(self, activity_type):
-        return self.data.get(activity_type)
+        return self.activities.get(activity_type)
+
+    def __repr__(self):
+        return str(self. activities)
