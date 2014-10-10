@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Send email to specified email adresses containting ip taken as argument
+# Send email to specified email addresses containing ip taken as argument
 import sys
 import smtplib
 from email.mime.text import MIMEText
