@@ -9,3 +9,6 @@ res
 
 #pycharm excludes
 .idea
+
+#python excludes
+*.pyc
