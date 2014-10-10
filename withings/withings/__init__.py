@@ -114,6 +114,10 @@ class WithingsApi(object):
         r = self.request('measure', 'getmeas', kwargs)
         return WithingsMeasures(r)
 
+    def get_activities(self, **kwargs):
+        r = self.request('v2/measure', 'getactivity', kwargs)
+        return WithingsActivities(r)
+
     def subscribe(self, callback_url, comment, appli=1):
         params = {'callbackurl': callback_url,
                   'comment': comment,
@@ -143,11 +147,16 @@ class WithingsMeasures(list):
         self.updatetime = datetime.datetime.fromtimestamp(data['updatetime'])
 
 
+class WithingsActivities(list):
+    def __init__(self, data):
+        super(WithingsActivities, self).__init__([WithingsActivityGroup(g) for g in data['activities']])
+
+
 class WithingsMeasureGroup(object):
     MEASURE_TYPES = (('weight', 1), ('height', 4), ('fat_free_mass', 5),
                      ('fat_ratio', 6), ('fat_mass_weight', 8),
                      ('diastolic_blood_pressure', 9), ('systolic_blood_pressure', 10),
-                     ('heart_pulse', 11))
+                     ('heart_pulse', 11), ('spo2', 54))
 
     def __init__(self, data):
         self.data = data
@@ -173,3 +182,12 @@ class WithingsMeasureGroup(object):
             if m['type'] == measure_type:
                 return m['value'] * pow(10, m['unit'])
         return None
+
+
+class WithingsActivityGroup(object):
+    def __init__(self, data):
+        self.data = data
+        self.date = datetime.datetime.strptime(data['date'], "%Y-%m-%d").date()
+
+    def get_activity(self, activity_type):
+        return self.data.get(activity_type)
