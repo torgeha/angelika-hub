@@ -1,49 +1,87 @@
-from inspect import getargspec
+import inspect
 from traceback import format_exc
+from os import chdir
+import ConfigParser
+import sys
+sys.path.insert(0, '../sensors')
+from withings_pulseo2 import WithingsPulseO2
+from datetime import datetime as dt, timedelta
 
 
 __author__ = 'David'
 __version__ = "0.0.1"
 
 
-def init_sensors():
+def get_sensor(sensor_name, mac_address=0):
     """
-    Initializes and connects to the sensors of this hub
-    @return: A list of active sensors that can be interfaced with
+    Takes a name and an optianal MAC adress to create a new sensor
+    The sensor to be created depends on the name, and it must subclass the sensor class
+    @param sensor_name: The name of the sensor
+    @param mac_address: The mac address of the sensor
+    @return: The sensor object for this sensor
     """
-    print "Initializing sensors\n"
-    # TODO: Make some sort of txt or config file with the sensors this hub should be connected to.
-    # TODO: Check if a config file exist and try to connect to the sensors.
-    # Not sure if we should use the sensor class, and have a list of sensors
-    # or if we should use just a list of mac addresses.
-    # The config file will just have the mac addresses though.
+    if sensor_name == 'withings_pulseo2':
+        return WithingsPulseO2()
 
 
-def search_for_sensors():
-    """
-    Searches for sensors and returns a list of BLE sensors
-    """
-    print "Searching for sensors ...\nNo sensors found\n"
-    # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
+class Hub():
+    def __init__(self):
+        chdir('../../res')  # This is to access the res directory in hub
+        self.config = ConfigParser.RawConfigParser()
+        self.config.read('hub_config.txt')
+        self.hub_id = self.config.get("id", "hub_id")
+        self.sensors = []
+        self.init_sensors()
 
+    def init_sensors(self):
+        """
+        Initializes and connects to the sensors of this hub
+        @return: A list of active sensors that can be interfaced with
+        """
+        print "Initializing sensors"
+        for sensor in self.config.items('sensors'):
+            self.sensors.append(get_sensor(*sensor))
+            print "Initialized sensor: " + sensor[0] + "\n"
+        # TODO try to connect to ble sensors
 
-def add_sensor(mac_address, name):
-    """
-    @param mac_address: The mac address for the sensor
-    @param name: The name of the sensor
-    Takes a mac adress and a name and adds it to the list of sensors of this hub
-    @return: True if sensor was successfully added to the list, false otherwise
-    """
-    print "Adding sensor: " + name + ", addr: " + mac_address
-    # TODO: add sensor to list and write to file.
+    def search_for_sensors(self):
+        """
+        Searches for sensors and returns a list of BLE sensors
+        """
+        print "(not really) Searching for sensors ...\nNo sensors found\n"
+        # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
 
+    def add_sensor(self, name, mac_address):
+        """
+        Takes a mac adress and a name and adds it to the list of sensors of this hub
+        @param mac_address: The mac address for the sensor
+        @param name: The name of the sensor
+        @return: True if sensor was successfully added to the list, false otherwise
+        """
+        print "Adding sensor: " + name + ", addr: " + mac_address
+        if name not in self.sensors:
+            self.config.set('sensors', name, mac_address)
+            # TODO write to config file
+            self.sensors.append(get_sensor(name, mac_address))
 
-def get_sensors():
-    """
-    This function returns a list of the currently
-    @return:
-    """
-    print "sensors: None"
+    def get_sensors(self):
+        """
+        This function returns a list of the currently connected sensors
+        @return:
+        """
+        print "sensors:" + str(self.sensors)
+        return self.sensors
+
+    def get_all_sensor_data(self):
+        measurements = []
+        end_time = dt.now()
+        # TODO change days to 7 when we fix caching and stuff. Just using 30 to test
+        start_time = end_time - timedelta(days=7)
+        for sensor in self.sensors:
+            measurements += sensor.get_all_measurements(start_time, end_time)
+        for m in measurements:
+            print m
+        return measurements
 
 
 def print_help():
@@ -52,29 +90,38 @@ def print_help():
     """
     print "Usage: action [arguments]: function"
     for k, v in program_functions.iteritems():
-        print k + " " + str(getargspec(v).args) + ": " + v.__name__
+        args = inspect.getargspec(v).args
+        if args and args[0] == 'self':
+            del args[0]
+        print k + " " + str(args) + ": " + v.__name__
 
 
-program_functions = {'s': search_for_sensors,
-                     'l': get_sensors,
-                     'a': add_sensor,
-                     'h': print_help}
+program_functions = {'s': Hub.search_for_sensors,
+                     'l': Hub.get_sensors,
+                     'a': Hub.add_sensor,
+                     'h': print_help,
+                     'g': Hub.get_all_sensor_data}
 
 
 def main():
     """
     The main method of the hub. This is where the magic happens
     """
-    init_sensors()
+    hub = Hub()
     while True:
         raw_program_input = raw_input("angelika_hub_" + __version__ + "> ")
         if raw_program_input == "" or raw_program_input == "exit":
             break
         program_input = str.split(raw_program_input, " ", 1)
         program_function = program_functions.get(program_input[0])
+        arguments = []
+        if hasattr(program_function, 'im_class'):
+            if program_function.im_class == Hub:
+                arguments.append(hub)
         try:
             if len(program_input) > 1:
-                arguments = str.split(program_input[1])
+                arguments += (str.split(program_input[1]))
+            if len(arguments) > 0:
                 program_function(*arguments)
             else:
                 program_function()
@@ -87,20 +134,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

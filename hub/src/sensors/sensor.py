@@ -5,7 +5,7 @@ class Sensor():
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_all_measurements(self, start_date, end_date):
+    def get_all_measurements(self, start_time, end_time):
         """Retreive all measurements from start date to end date (including)"""
         return
 

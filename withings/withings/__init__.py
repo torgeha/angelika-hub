@@ -190,7 +190,7 @@ class WithingsMeasureGroup(object):
 class WithingsActivityGroup(object):
     def __init__(self, data):
         self.activities = data
-        self.date = datetime.datetime.strptime(data['date'], "%Y-%m-%d").date()
+        self.date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
         del self.activities['date']
         del self.activities['timezone']
 

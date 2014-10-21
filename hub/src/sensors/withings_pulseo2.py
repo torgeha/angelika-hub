@@ -6,10 +6,17 @@ from sensor import Sensor, Measurement
 
 
 class WithingsPulseO2(Sensor):
+    MEASURE_TYPES = {11: 'heart_rate', 54: 'spo2'}
+    VALUE_UNITS = {11: 'bpm', 54: 'percent'}
+
     def __init__(self):
-        os.chdir('../../res')  # This is to access the res directory in hub
         config = ConfigParser.RawConfigParser()
-        config.read('oauth_pulse02.txt')
+        # Tries to access the res directory in hub
+        try:
+            config.read('oauth_pulse02.txt')
+            config.get('keys', 'oauth_token')
+        except ConfigParser.NoSectionError:
+            config.read('../../res/oauth_pulse02.txt')
 
         access_token = config.get('keys', 'oauth_token')
         access_token_secret = config.get('keys', 'oauth_token_secret')
@@ -31,8 +38,10 @@ class WithingsPulseO2(Sensor):
                 measurements.append(Measurement(name, value, "NA", activities.date))
         for measures in measure_group:
             for m in measures.measures:
-                measurements.append(Measurement(m['type'], m['value'], "NA", measures.date))
-        return measurements
+                if self.MEASURE_TYPES.get(m['type']):
+                    measurements.append(Measurement(self.MEASURE_TYPES[m['type']], m['value'],
+                                                    self.VALUE_UNITS[m['type']], measures.date))
+        return sorted(measurements, key=lambda measurement: measurement.date)
 
 
 
