@@ -1,4 +1,6 @@
 from inspect import getargspec
+from traceback import format_exc
+
 
 __author__ = 'David'
 __version__ = "0.0.1"
@@ -6,7 +8,7 @@ __version__ = "0.0.1"
 
 def init_sensors():
     """
-    This function initializes and connects to the sensors of this hub
+    Initializes and connects to the sensors of this hub
     @return: A list of active sensors that can be interfaced with
     """
     print "Initializing sensors\n"
@@ -19,7 +21,7 @@ def init_sensors():
 
 def search_for_sensors():
     """
-    This function searches for sensors and returns a list of BLE sensors
+    Searches for sensors and returns a list of BLE sensors
     """
     print "Searching for sensors ...\nNo sensors found\n"
     # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
@@ -29,7 +31,7 @@ def add_sensor(mac_address, name):
     """
     @param mac_address: The mac address for the sensor
     @param name: The name of the sensor
-    This function takes a mac adress and a name and adds it to the list of sensors of this hub
+    Takes a mac adress and a name and adds it to the list of sensors of this hub
     @return: True if sensor was successfully added to the list, false otherwise
     """
     print "Adding sensor: " + name + ", addr: " + mac_address
@@ -45,6 +47,9 @@ def get_sensors():
 
 
 def print_help():
+    """
+    Prints what functions are allowed to use
+    """
     print "Usage: action [arguments]: function"
     for k, v in program_functions.iteritems():
         print k + " " + str(getargspec(v).args) + ": " + v.__name__
@@ -57,10 +62,14 @@ program_functions = {'s': search_for_sensors,
 
 
 def main():
+    """
+    The main method of the hub. This is where the magic happens
+    """
     init_sensors()
-    raw_program_input = "input"
-    while raw_program_input != "exit":
+    while True:
         raw_program_input = raw_input("angelika_hub_" + __version__ + "> ")
+        if raw_program_input == "" or raw_program_input == "exit":
+            break
         program_input = str.split(raw_program_input, " ", 1)
         program_function = program_functions.get(program_input[0])
         try:
@@ -70,7 +79,9 @@ def main():
             else:
                 program_function()
         except TypeError:
-            print "Wrong number of arguments"
+            print "Error, probably wrong number of arguments"
+            print format_exc()
+    print "Terminating..."
     # TODO: terminate hub
 
 
