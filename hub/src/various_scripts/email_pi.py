@@ -8,7 +8,7 @@ import datetime
 #Append additional recipients to this list
 to = ['email@placeholder.com', 'email2@placeholder.com']
 gmail_user = 'angelikarasp@gmail.com'
-gmail_password = 'gruppe11'
+gmail_password = 'Enter password here'  # password for the email
 smtpserver = smtplib.SMTP('smtp.gmail.com', 587)
 smtpserver.ehlo()
 smtpserver.starttls()
