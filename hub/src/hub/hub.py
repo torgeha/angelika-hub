@@ -61,7 +61,9 @@ class Hub():
         print "Adding sensor: " + name + ", addr: " + mac_address
         if name not in self.sensors:
             self.config.set('sensors', name, mac_address)
-            # TODO write to config file
+            config_file = open('hub_config.txt', 'w')
+            self.config.write(config_file)
+            config_file.close()
             self.sensors.append(get_sensor(name, mac_address))
 
     def get_sensors(self):
@@ -75,7 +77,7 @@ class Hub():
     def get_all_sensor_data(self):
         measurements = []
         end_time = dt.now()
-        # TODO change days to 7 when we fix caching and stuff. Just using 30 to test
+        # TODO change this when we get caching to work
         start_time = end_time - timedelta(days=7)
         for sensor in self.sensors:
             measurements += sensor.get_all_measurements(start_time, end_time)
