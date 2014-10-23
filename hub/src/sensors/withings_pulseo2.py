@@ -7,7 +7,8 @@ from sensor import Sensor, Measurement
 
 class WithingsPulseO2(Sensor):
     MEASURE_TYPES = {11: 'heart_rate', 54: 'spo2'}
-    VALUE_UNITS = {11: 'bpm', 54: 'percent'}
+    VALUE_UNITS = {11: 'bpm', 54: 'percent', 'steps': 'steps', 'distance': 'm', 'elevation': 'm', 'soft': 's',
+                   'moderate': 's', 'intense': 's', 'calories': 'kcal'}
 
     def __init__(self):
         config = ConfigParser.RawConfigParser()
@@ -35,7 +36,7 @@ class WithingsPulseO2(Sensor):
         measurements = []
         for activities in activity_group:
             for name, value in activities.activities.iteritems():
-                measurements.append(Measurement(name, value, "NA", activities.date))
+                measurements.append(Measurement(name, value, self.VALUE_UNITS[name], activities.date))
         for measures in measure_group:
             for m in measures.measures:
                 if self.MEASURE_TYPES.get(m['type']):
