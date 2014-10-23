@@ -3,9 +3,10 @@ from traceback import format_exc
 from os import chdir
 import ConfigParser
 import sys
+from datetime import datetime as dt, timedelta
+import caching
 sys.path.insert(0, '../sensors')
 from withings_pulseo2 import WithingsPulseO2
-from datetime import datetime as dt, timedelta
 
 
 __author__ = 'David'
@@ -59,7 +60,7 @@ class Hub():
         @return: True if sensor was successfully added to the list, false otherwise
         """
         print "Adding sensor: " + name + ", addr: " + mac_address
-        if name not in self.sensors:
+        if name not in self.sensors: # TODO this test never fails. comparing string with sensor object
             self.config.set('sensors', name, mac_address)
             config_file = open('hub_config.txt', 'w')
             self.config.write(config_file)
@@ -81,8 +82,8 @@ class Hub():
         start_time = end_time - timedelta(days=7)
         for sensor in self.sensors:
             measurements += sensor.get_all_measurements(start_time, end_time)
-        for m in measurements:
-            print m
+        #for m in measurements:
+        #    print m
         return measurements
 
 
@@ -98,18 +99,22 @@ def print_help():
         print k + " " + str(args) + ": " + v.__name__
 
 
+def cache_data():
+    caching.cache_measurements(hub.get_all_sensor_data())
+
 program_functions = {'s': Hub.search_for_sensors,
                      'l': Hub.get_sensors,
                      'a': Hub.add_sensor,
                      'h': print_help,
-                     'g': Hub.get_all_sensor_data}
+                     'g': Hub.get_all_sensor_data,
+                     'c': cache_data}
+hub = Hub()
 
 
 def main():
     """
     The main method of the hub. This is where the magic happens
     """
-    hub = Hub()
     while True:
         raw_program_input = raw_input("angelika_hub_" + __version__ + "> ")
         if raw_program_input == "" or raw_program_input == "exit":
