@@ -79,7 +79,7 @@ class Hub():
         measurements = []
         end_time = dt.now()
         # TODO change this when we get caching to work
-        start_time = end_time - timedelta(days=7)
+        start_time = end_time - timedelta(days=7)  # TODO should be 7 days
         for sensor in self.sensors:
             measurements += sensor.get_all_measurements(start_time, end_time)
         #for m in measurements:
