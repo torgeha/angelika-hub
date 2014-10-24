@@ -32,11 +32,15 @@ def cache_measurements(measurements):
     try:
         old_measurements = get_old_measurements()
     except IOError:
+        old_measurements = []
         print "Couldn't read file"
         print format_exc()
     measurement_list = measurements_to_list(measurements)
     new_measurements = []
-    for m in measurement_list:
-        if m not in old_measurements:
-            new_measurements.append(m)
+    if old_measurements:
+        for m in measurement_list:
+            if m not in old_measurements:
+                new_measurements.append(m)
+    else:
+        new_measurements = measurement_list
     write_measurements_to_file(old_measurements + new_measurements)
