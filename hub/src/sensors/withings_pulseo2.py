@@ -10,7 +10,8 @@ class WithingsPulseO2(Sensor):
     VALUE_UNITS = {11: 'bpm', 54: 'percent', 'steps': 'steps', 'distance': 'm', 'elevation': 'm', 'soft': 's',
                    'moderate': 's', 'intense': 's', 'calories': 'kcal'}
 
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         config = ConfigParser.RawConfigParser()
         # Tries to access the res directory in hub
         try:

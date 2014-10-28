@@ -5,32 +5,22 @@ import ConfigParser
 import sys
 from datetime import datetime as dt, timedelta
 import caching
+import time
 sys.path.insert(0, '../sensors')
 from withings_pulseo2 import WithingsPulseO2
 
 
 __author__ = 'David'
-__version__ = "0.0.1"
-
-
-def get_sensor(sensor_name, mac_address=0):
-    """
-    Takes a name and an optianal MAC adress to create a new sensor
-    The sensor to be created depends on the name, and it must subclass the sensor class
-    @param sensor_name: The name of the sensor
-    @param mac_address: The mac address of the sensor
-    @return: The sensor object for this sensor
-    """
-    if sensor_name == 'withings_pulseo2':
-        return WithingsPulseO2()
+__version__ = '0.0.1'
+__config_file__ = 'hub_config.txt'
 
 
 class Hub():
     def __init__(self):
         chdir('../../res')  # This is to access the res directory in hub
         self.config = ConfigParser.RawConfigParser()
-        self.config.read('hub_config.txt')
-        self.hub_id = self.config.get("id", "hub_id")
+        self.config.read(__config_file__)
+        self.hub_id = self.config.get('id', 'hub_id')
         self.sensors = []
         self.init_sensors()
 
@@ -41,9 +31,22 @@ class Hub():
         """
         print "Initializing sensors"
         for sensor in self.config.items('sensors'):
-            self.sensors.append(get_sensor(*sensor))
+            self.sensors.append(self.get_sensor(sensor[0]))
             print "Initialized sensor: " + sensor[0] + "\n"
-        # TODO try to connect to ble sensors
+            # TODO try to connect to ble sensors
+
+    def get_sensor(self, sensor_name):
+        """
+        Takes a name to create a new sensor
+        The sensor to be created depends on type of sensor, and it must subclass the sensor class
+        @param sensor_name: The name of the sensor
+        @return: The sensor object for this sensor
+        """
+        sensor_type = self.config.get(sensor_name, 'type')
+        # MAC not used by withings sensor, but should be used for BLE devices
+        mac_address = self.config.get(sensor_name, 'mac_address')
+        if sensor_type == 'withings_pulseo2':
+            return WithingsPulseO2(sensor_name)
 
     def search_for_sensors(self):
         """
@@ -52,20 +55,27 @@ class Hub():
         print "(not really) Searching for sensors ...\nNo sensors found\n"
         # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
 
-    def add_sensor(self, name, mac_address):
+    def add_sensor(self, name, sensor_type, mac_address=None):
         """
         Takes a mac adress and a name and adds it to the list of sensors of this hub
-        @param mac_address: The mac address for the sensor
         @param name: The name of the sensor
+        @param sensor_type: The type of sensor
+        @param mac_address: The MAC address of the sensor
         @return: True if sensor was successfully added to the list, false otherwise
         """
-        print "Adding sensor: " + name + ", addr: " + mac_address
-        if name not in self.sensors: # TODO this test never fails. comparing string with sensor object
-            self.config.set('sensors', name, mac_address)
-            config_file = open('hub_config.txt', 'w')
+        print "Adding sensor: " + name + ", type: " + sensor_type + ', MAC address: ' + str(mac_address)
+        if not [s for s in self.sensors if s.name == name]:
+            self.config.set('sensors', name, sensor_type)
+            self.config.add_section(name)
+            self.config.set(name, 'type', sensor_type)
+            self.config.set(name, 'mac_address', mac_address)
+            self.config.set(name, 'last_update', int(time.mktime((dt.utcnow()-timedelta(days=7)).timetuple())))
+            config_file = open(__config_file__, 'w')
             self.config.write(config_file)
             config_file.close()
-            self.sensors.append(get_sensor(name, mac_address))
+            self.sensors.append(self.get_sensor(name))
+        else:
+            print "A sensor with that name already exists"
 
     def get_sensors(self):
         """
@@ -77,13 +87,11 @@ class Hub():
 
     def get_all_sensor_data(self):
         measurements = []
-        end_time = dt.now()
+        end_time = dt.utcnow()
         # TODO change this when we get caching to work
-        start_time = end_time - timedelta(days=7)  # TODO should be 7 days
+        start_time = end_time - timedelta(days=7)
         for sensor in self.sensors:
             measurements += sensor.get_all_measurements(start_time, end_time)
-        #for m in measurements:
-        #    print m
         return measurements
 
 
