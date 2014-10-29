@@ -1,48 +1,33 @@
 import json
 import time
+from datetime import datetime as dt
 
 __author__ = 'David'
 __filename__ = 'cached_data.jsn'
 __filepath__ = '../cache/'
 
 
-def measurements_to_dictionary(measurements):
-    measurement_dict = {}
+def measurements_to_dictionaries(measurements):
+    measurement_list = []
     for m in measurements:
-        date = m.date.strftime('%Y-%m-%d')
         measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit, 'date': int(time.mktime(m.date.timetuple()))}
-        measurement_list = measurement_dict.get(date)
-        if not measurement_list:
-            measurement_list = []
-            measurement_dict[date] = measurement_list
         measurement_list.append(measurement)
-    return measurement_dict
+    return measurement_list
 
 
-def write_measurements_to_file(measurements_by_date):
-    for date, measurements in measurements_by_date.iteritems():
-        filename = __filepath__ + date + ".json"
-        f = open(filename, 'w')
-        measurement_dictionary = {'Measurements': measurements_by_date[date]}
-        json.dump(measurement_dictionary, f, indent=4, sort_keys=True)
-        f.close()
+def write_measurements_to_file(sensor, measurements):
+    utc_now = int(time.mktime(dt.utcnow().timetuple()))
+    sensor.last_updated = utc_now
+    filename = __filepath__ + sensor.name + str(utc_now) + ".json"
+    f = open(filename, 'w')
+    measurement_dictionary = {'Measurements': measurements}
+    json.dump(measurement_dictionary, f, indent=4, sort_keys=True)
+    f.close()
 
 
-def get_old_measurements(measurements):
-    d = {}
-    for m in measurements:
-        date = m.date.strftime('%Y-%m-%d')
-        filename = __filepath__ + date + ".json"
-        if d.get(date):
-            break
-        try:
-            f = open(filename, 'r')
-            json_load = json.load(f)
-            f.close()
-            d[date] = json_load['Measurements']
-        except IOError:
-            pass
-    return d
+def get_old_measurements(last_update):
+    pass
+    #TODO make this method look for measurements not yet sent to server
 
 
 def temp(measurements):
@@ -54,19 +39,8 @@ def temp(measurements):
     json.dump({'Observation': {'hub_id': 1234, 'Measurements': measurement_list}}, f, indent=4, sort_keys=True)
 
 
-def cache_measurements(measurements):
+def cache_measurements(sensor, measurements):
     temp(measurements)
-    old_measurements = get_old_measurements(measurements)
-    measurement_dictionary = measurements_to_dictionary(measurements)
-    all_measurements = {}
-    if old_measurements:
-        for date, ms in measurement_dictionary.iteritems():
-            old_list = old_measurements.get(date)
-            if old_list:
-                new = [m for m in ms if m not in old_measurements[date]]
-                all_measurements[date] = new + old_list
-            else:
-                all_measurements[date] = ms
-    else:
-        all_measurements = measurement_dictionary
-    write_measurements_to_file(all_measurements)
+    measurement_dictionaries = measurements_to_dictionaries(measurements)
+    write_measurements_to_file(sensor, measurement_dictionaries)
+    return True

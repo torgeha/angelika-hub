@@ -12,7 +12,7 @@ class WithingsPulseO2(Sensor):
 
     def __init__(self, name):
         self._name = name
-        self._last_updated = 0
+        self._last_updated = 946684800  # 2000.01.01
         config = ConfigParser.RawConfigParser()
         # Tries to access the res directory in hub
         try:

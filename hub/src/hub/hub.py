@@ -57,6 +57,11 @@ class Hub():
         print "(not really) Searching for sensors ...\nNo sensors found\n"
         # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
 
+    def config_write(self):
+        config_file = open(__config_file__, 'w')
+        self.config.write(config_file)
+        config_file.close()
+
     def add_sensor(self, name, sensor_type, mac_address=None):
         """
         Takes a mac adress and a name and adds it to the list of sensors of this hub
@@ -72,9 +77,7 @@ class Hub():
             self.config.set(name, 'type', sensor_type)
             self.config.set(name, 'mac_address', mac_address)
             self.config.set(name, 'last_update', int(time.mktime((dt.utcnow()-timedelta(days=7)).timetuple())))
-            config_file = open(__config_file__, 'w')
-            self.config.write(config_file)
-            config_file.close()
+            self.config_write()
             self.sensors.append(self.get_sensor(name))
         else:
             print "A sensor with that name already exists"
@@ -88,12 +91,14 @@ class Hub():
         return self.sensors
 
     def get_all_sensor_data(self):
-        measurements = []
         end_time = dt.utcnow()
-        # TODO change this when we get caching to work
-        start_time = end_time - timedelta(days=7)
         for sensor in self.sensors:
-            measurements += sensor.get_all_measurements(start_time, end_time)
+            start_time = dt.utcfromtimestamp(sensor.last_updated)
+            measurements = sensor.get_all_measurements(start_time, end_time)
+            if measurements:
+                if caching.cache_measurements(sensor, measurements):
+                    self.config.set(sensor.name, 'last_update', sensor.last_updated)
+                    self.config_write()
         return measurements
 
 
@@ -109,15 +114,11 @@ def print_help():
         print k + " " + str(args) + ": " + v.__name__
 
 
-def cache_data():
-    caching.cache_measurements(hub.get_all_sensor_data())
-
 program_functions = {'s': Hub.search_for_sensors,
                      'l': Hub.get_sensors,
                      'a': Hub.add_sensor,
                      'h': print_help,
-                     'g': Hub.get_all_sensor_data,
-                     'c': cache_data}
+                     'g': Hub.get_all_sensor_data}
 hub = Hub()
 
 
