@@ -11,7 +11,8 @@ class WithingsPulseO2(Sensor):
                    'moderate': 's', 'intense': 's', 'calories': 'kcal'}
 
     def __init__(self, name):
-        self.name = name
+        self._name = name
+        self._last_updated = 0
         config = ConfigParser.RawConfigParser()
         # Tries to access the res directory in hub
         try:
@@ -28,6 +29,22 @@ class WithingsPulseO2(Sensor):
 
         creds = WithingsCredentials(access_token, access_token_secret, consumer_key, consumer_secret, user_id)
         self.client = WithingsApi(creds)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def last_updated(self):
+        return self._last_updated
+
+    @last_updated.setter
+    def last_updated(self, value):
+        self._last_updated = value
+
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     def get_all_measurements(self, start_date, end_date):
         measure_group = self.client.get_measures(startdate=time.mktime(start_date.timetuple()),

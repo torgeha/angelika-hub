@@ -4,6 +4,14 @@ from abc import ABCMeta, abstractmethod
 class Sensor():
     __metaclass__ = ABCMeta
 
+    @property
+    def name(self):
+        raise NotImplementedError
+
+    @property
+    def last_updated(self):
+        raise NotImplementedError
+
     @abstractmethod
     def get_all_measurements(self, start_time, end_time):
         """Retreive all measurements from start date to end date (including)"""

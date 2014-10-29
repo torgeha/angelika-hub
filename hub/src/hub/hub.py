@@ -46,7 +46,9 @@ class Hub():
         # MAC not used by withings sensor, but should be used for BLE devices
         mac_address = self.config.get(sensor_name, 'mac_address')
         if sensor_type == 'withings_pulseo2':
-            return WithingsPulseO2(sensor_name)
+            sensor = WithingsPulseO2(sensor_name)
+            sensor.last_updated = self.config.getint(sensor_name, 'last_update')
+            return sensor
 
     def search_for_sensors(self):
         """
