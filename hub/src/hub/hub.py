@@ -7,7 +7,7 @@ from datetime import datetime as dt, timedelta
 import caching
 import time
 sys.path.insert(0, '../sensors')
-import sensors
+from withings_pulseo2 import WithingsPulseO2
 
 
 __author__ = 'David'
@@ -45,7 +45,8 @@ class Hub():
         """
         sensor_type = self.config.get(sensor_name, 'type')
         mac_address = self.config.get(sensor_name, 'mac_address')
-        sensor = sensors.get_sensor(sensor_name, sensor_type, mac_address)
+        if sensor_type == 'withings_pulseo2':
+            sensor = WithingsPulseO2(sensor_name)
         sensor.last_updated = self.config.getint(sensor_name, 'last_update')
         return sensor
 
@@ -113,6 +114,20 @@ def print_help():
         print k + " " + str(args) + ": " + v.__name__
 
 
+def send_data_to_server():
+    filenames = caching.get_old_measurements(hub.last_updated)
+    for filename in filenames:
+        try:
+            print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
+            # TODO: send the files to the server
+            pass
+        except Exception:
+            # TODO catch better exceptions
+            pass
+
+
+
+
 def main():
     """
     The main method of the hub. This is where the magic happens
@@ -147,6 +162,7 @@ if __name__ == "__main__":
                          'l': Hub.get_sensors,
                          'a': Hub.add_sensor,
                          'h': print_help,
-                         'g': Hub.get_all_sensor_data}
+                         'g': Hub.get_all_sensor_data,
+                         'send': send_data_to_server}
     hub = Hub()
     main()

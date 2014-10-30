@@ -51,7 +51,7 @@ def get_old_measurements(last_update):
     for filename in filenames:
         date = filename[0:filename.index('_')]
         if date > last_update:
-            files_not_sent.append(filename)
+            files_not_sent.append(os.path.dirname(os.path.abspath(__filepath__ + filename)) + '\\' + filename)
     return files_not_sent
 
 
