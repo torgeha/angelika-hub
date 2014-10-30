@@ -1,9 +1,9 @@
 import json
 import time
 from datetime import datetime as dt
+import os
 
 __author__ = 'David'
-__filename__ = 'cached_data.jsn'
 __filepath__ = '../cache/'
 
 
@@ -15,32 +15,46 @@ def measurements_to_dictionaries(measurements):
     return measurement_list
 
 
-def write_measurements_to_file(sensor, measurements):
+def get_new_measurements(sensor, measurements):
+    all_filenames = next(os.walk(__filepath__))[2]
+    sensor_filenames = [name for name in all_filenames if sensor.name in name]
+    old_measurements = []
+    for filename in sensor_filenames:
+        f = open(__filepath__ + filename, 'r')
+        old_measurements += json.load(f)['Measurements']
+        f.close()
+    new_measurements = [m for m in measurements if m not in old_measurements]
+    return new_measurements
+
+
+def write_measurements_to_file(sensor, measurements, hub):
+    max_date = measurements[0]['date']
+    for m in measurements:
+        max_date = max(max_date, m['date'])
+    sensor.last_updated = max_date
+    new_measurements = get_new_measurements(sensor, measurements)
+    print new_measurements
+    if not new_measurements:
+        return False
     utc_now = int(time.mktime(dt.utcnow().timetuple()))
-    sensor.last_updated = utc_now
-    filename = __filepath__ + sensor.name + str(utc_now) + ".json"
+    filename = __filepath__ + str(utc_now) + "_" + sensor.name + ".json"
     f = open(filename, 'w')
-    measurement_dictionary = {'Measurements': measurements}
+    measurement_dictionary = {'Observation': {'hub_id': hub.hub_id}, 'Measurements': measurements}
     json.dump(measurement_dictionary, f, indent=4, sort_keys=True)
     f.close()
+    return True
 
 
 def get_old_measurements(last_update):
-    pass
-    #TODO make this method look for measurements not yet sent to server
+    files_not_sent = []
+    filenames = next(os.walk(__filepath__))[2]
+    for filename in filenames:
+        date = filename[0:filename.index('_')]
+        if date > last_update:
+            files_not_sent.append(filename)
+    return files_not_sent
 
 
-def temp(measurements):
-    f = open(__filename__, 'w')
-    measurement_list = []
-    for m in measurements:
-        measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit, 'date': int(time.mktime(m.date.timetuple()))}
-        measurement_list.append(measurement)
-    json.dump({'Observation': {'hub_id': 1234, 'Measurements': measurement_list}}, f, indent=4, sort_keys=True)
-
-
-def cache_measurements(sensor, measurements):
-    temp(measurements)
+def cache_measurements(sensor, measurements, hub):
     measurement_dictionaries = measurements_to_dictionaries(measurements)
-    write_measurements_to_file(sensor, measurement_dictionaries)
-    return True
+    return write_measurements_to_file(sensor, measurement_dictionaries, hub)

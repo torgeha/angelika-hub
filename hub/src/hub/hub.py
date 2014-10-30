@@ -96,7 +96,7 @@ class Hub():
             start_time = dt.utcfromtimestamp(sensor.last_updated)
             measurements = sensor.get_all_measurements(start_time, end_time)
             if measurements:
-                if caching.cache_measurements(sensor, measurements):
+                if caching.cache_measurements(sensor, measurements, self):
                     self.config.set(sensor.name, 'last_update', sensor.last_updated)
                     self.config_write()
         return measurements
