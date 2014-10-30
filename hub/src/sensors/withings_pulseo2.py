@@ -2,7 +2,7 @@ from withings import *
 import ConfigParser
 import os
 import time
-from sensor import Sensor, Measurement
+from sensors import Sensor, Measurement
 
 
 class WithingsPulseO2(Sensor):

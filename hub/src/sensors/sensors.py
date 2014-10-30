@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from withings_pulseo2 import WithingsPulseO2
 
 
 class Sensor():
@@ -16,6 +17,19 @@ class Sensor():
     def get_all_measurements(self, start_time, end_time):
         """Retreive all measurements from start date to end date (including)"""
         return
+
+
+def get_sensor(sensor_name, sensor_type, mac_address):
+    """
+    This is a factory that returns a sensor based on the sensor type
+
+    @param sensor_name: The name of the sensor
+    @param sensor_type: The type of the sensor
+    @param mac_address: The MAC address of the sensor
+    @return: The sensor object
+    """
+    if sensor_type == 'withings_pulseo2':
+        return WithingsPulseO2(sensor_name)
 
 
 class Measurement():

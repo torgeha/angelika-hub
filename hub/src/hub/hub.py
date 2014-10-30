@@ -7,7 +7,7 @@ from datetime import datetime as dt, timedelta
 import caching
 import time
 sys.path.insert(0, '../sensors')
-from withings_pulseo2 import WithingsPulseO2
+import sensors
 
 
 __author__ = 'David'
@@ -20,7 +20,8 @@ class Hub():
         chdir('../../res')  # This is to access the res directory in hub
         self.config = ConfigParser.RawConfigParser()
         self.config.read(__config_file__)
-        self.hub_id = self.config.get('id', 'hub_id')
+        self.hub_id = self.config.get('hub', 'hub_id')
+        self.last_updated = self.config.getint('hub', 'last_update')
         self.sensors = []
         self.init_sensors()
 
@@ -43,19 +44,17 @@ class Hub():
         @return: The sensor object for this sensor
         """
         sensor_type = self.config.get(sensor_name, 'type')
-        # MAC not used by withings sensor, but should be used for BLE devices
         mac_address = self.config.get(sensor_name, 'mac_address')
-        if sensor_type == 'withings_pulseo2':
-            sensor = WithingsPulseO2(sensor_name)
-            sensor.last_updated = self.config.getint(sensor_name, 'last_update')
-            return sensor
+        sensor = sensors.get_sensor(sensor_name, sensor_type, mac_address)
+        sensor.last_updated = self.config.getint(sensor_name, 'last_update')
+        return sensor
 
     def search_for_sensors(self):
         """
         Searches for sensors and returns a list of BLE sensors
         """
         print "(not really) Searching for sensors ...\nNo sensors found\n"
-        # TODO: use gatttool lescan to search for BLE devices and return a list (or similar) of them.
+        # TODO: use gatttool lescan to search for BLE devices and return a list of them.
 
     def config_write(self):
         config_file = open(__config_file__, 'w')
@@ -114,14 +113,6 @@ def print_help():
         print k + " " + str(args) + ": " + v.__name__
 
 
-program_functions = {'s': Hub.search_for_sensors,
-                     'l': Hub.get_sensors,
-                     'a': Hub.add_sensor,
-                     'h': print_help,
-                     'g': Hub.get_all_sensor_data}
-hub = Hub()
-
-
 def main():
     """
     The main method of the hub. This is where the magic happens
@@ -151,4 +142,11 @@ def main():
 
 
 if __name__ == "__main__":
+    global program_functions, hub
+    program_functions = {'s': Hub.search_for_sensors,
+                         'l': Hub.get_sensors,
+                         'a': Hub.add_sensor,
+                         'h': print_help,
+                         'g': Hub.get_all_sensor_data}
+    hub = Hub()
     main()
