@@ -1,11 +1,12 @@
+import sys
+import time
 import inspect
+import caching
+import ConfigParser
 from traceback import format_exc
 from os import chdir
-import ConfigParser
-import sys
 from datetime import datetime as dt, timedelta
-import caching
-import time
+from json_posting import JsonPosting
 sys.path.insert(0, '../sensors')
 from withings_pulseo2 import WithingsPulseO2
 
@@ -20,9 +21,12 @@ class Hub():
         chdir('../../res')  # This is to access the res directory in hub
         self.config = ConfigParser.RawConfigParser()
         self.config.read(__config_file__)
-        self.hub_id = self.config.get('hub', 'hub_id')
+        self.hub_id = self.config.get('hub', 'hub_id') # Username
         self.last_updated = self.config.getint('hub', 'last_update')
+        self.password = self.config.get('hub', 'password')
+        self.token = self.config.get('hub', 'token')
         self.sensors = []
+        self.json_posting = JsonPosting()
         self.init_sensors()
 
     def init_sensors(self):
@@ -116,14 +120,35 @@ def print_help():
 
 def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
-    for filename in filenames:
-        try:
+
+    token = hub.token
+
+    # for filename in filenames:
+    try:
+        for filename in filenames:
+
             print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
-            # TODO: send the files to the server
-            pass
-        except Exception:
-            # TODO catch better exceptions
-            pass
+
+            new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, token=token)
+
+            if new_token != token:
+                hub.token = new_token
+                hub.config.set('hub', 'token', new_token)
+                hub.config_write()
+
+        # Update last updated in config file
+        timestamp = int(time.mktime(dt.utcnow().timetuple()))
+        hub.last_updated = timestamp
+        hub.config.set('hub', 'last_update', timestamp)
+        hub.config_write()
+
+    except Exception:
+        # TODO catch better exceptions
+        # authenticate_before_posting(hub.hub_id, hub.password)
+        # TODO: Check if exception --> status code not authenticated, else handle accordingly
+
+        print "EXCEPTION when trying to post!"
+        print format_exc()
 
 
 
