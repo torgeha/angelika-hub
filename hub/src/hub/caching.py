@@ -39,7 +39,7 @@ def write_measurements_to_file(sensor, measurements, hub):
     utc_now = int(calendar.timegm(dt.utcnow().timetuple()))
     filename = __filepath__ + str(utc_now) + "_" + sensor.name + ".json"
     f = open(filename, 'w')
-    measurement_dictionary = {'Observation': {'hub_id': hub.hub_id}, 'Measurements': measurements}
+    measurement_dictionary = {'Observation': {'hub_id': hub.hub_id}, 'Measurements': new_measurements}
     json.dump(measurement_dictionary, f, indent=4, sort_keys=True)
     f.close()
     return True
