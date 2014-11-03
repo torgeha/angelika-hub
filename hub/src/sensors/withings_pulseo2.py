@@ -1,7 +1,6 @@
 from withings import *
 import ConfigParser
-import os
-import time
+import calendar
 from sensors import Sensor, Measurement
 
 
@@ -47,8 +46,8 @@ class WithingsPulseO2(Sensor):
         self._name = value
 
     def get_all_measurements(self, start_date, end_date):
-        measure_group = self.client.get_measures(startdate=time.mktime(start_date.timetuple()),
-                                                 enddate=time.mktime(end_date.timetuple()))
+        measure_group = self.client.get_measures(startdate=calendar.timegm(start_date.timetuple()),
+                                                 enddate=calendar.timegm(end_date.timetuple()))
         activity_group = self.client.get_activities(startdateymd=start_date.strftime('%Y-%m-%d'),
                                                     enddateymd=end_date.strftime('%Y-%m-%d'))
         measurements = []

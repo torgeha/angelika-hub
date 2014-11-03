@@ -5,7 +5,7 @@ import ConfigParser
 import sys
 from datetime import datetime as dt, timedelta
 import caching
-import time
+import calendar
 sys.path.insert(0, '../sensors')
 from withings_pulseo2 import WithingsPulseO2
 
@@ -76,7 +76,7 @@ class Hub():
             self.config.add_section(name)
             self.config.set(name, 'type', sensor_type)
             self.config.set(name, 'mac_address', mac_address)
-            self.config.set(name, 'last_update', int(time.mktime((dt.utcnow()-timedelta(days=7)).timetuple())))
+            self.config.set(name, 'last_update', int(calendar.timegm((dt.utcnow()-timedelta(days=7)).timetuple())))
             self.config_write()
             self.sensors.append(self.get_sensor(name))
         else:
@@ -138,6 +138,10 @@ def main():
             break
         program_input = str.split(raw_program_input, " ", 1)
         program_function = program_functions.get(program_input[0])
+        if not program_function:
+            print "No such function\n"
+            print_help()
+            continue
         arguments = []
         if hasattr(program_function, 'im_class'):
             if program_function.im_class == Hub:

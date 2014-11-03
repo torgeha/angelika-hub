@@ -1,5 +1,5 @@
 import json
-import time
+import calendar
 from datetime import datetime as dt
 import os
 
@@ -10,7 +10,7 @@ __filepath__ = '../cache/'
 def measurements_to_dictionaries(measurements):
     measurement_list = []
     for m in measurements:
-        measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit, 'date': int(time.mktime(m.date.timetuple()))}
+        measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit, 'date': int(calendar.timegm(m.date.timetuple()))}
         measurement_list.append(measurement)
     return measurement_list
 
@@ -28,15 +28,14 @@ def get_new_measurements(sensor, measurements):
 
 
 def write_measurements_to_file(sensor, measurements, hub):
-    max_date = measurements[0]['date']
+    max_date = sensor.last_updated
     for m in measurements:
         max_date = max(max_date, m['date'])
     sensor.last_updated = max_date
     new_measurements = get_new_measurements(sensor, measurements)
-    print new_measurements
     if not new_measurements:
         return False
-    utc_now = int(time.mktime(dt.utcnow().timetuple()))
+    utc_now = int(calendar.timegm(dt.utcnow().timetuple()))
     filename = __filepath__ + str(utc_now) + "_" + sensor.name + ".json"
     f = open(filename, 'w')
     measurement_dictionary = {'Observation': {'hub_id': hub.hub_id}, 'Measurements': measurements}
