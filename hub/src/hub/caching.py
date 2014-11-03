@@ -34,6 +34,7 @@ def write_measurements_to_file(sensor, measurements, hub):
     sensor.last_updated = max_date
     new_measurements = get_new_measurements(sensor, measurements)
     if not new_measurements:
+        print "No new measurements"
         return False
     utc_now = int(calendar.timegm(dt.utcnow().timetuple()))
     filename = __filepath__ + str(utc_now) + "_" + sensor.name + ".json"

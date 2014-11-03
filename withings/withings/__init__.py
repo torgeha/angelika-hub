@@ -163,7 +163,7 @@ class WithingsMeasureGroup(object):
         self.grpid = data['grpid']
         self.attrib = data['attrib']
         self.category = data['category']
-        self.date = datetime.datetime.fromtimestamp(data['date'])
+        self.date = datetime.datetime.utcfromtimestamp(data['date'])
         self.measures = data['measures']
         for n, t in self.MEASURE_TYPES:
             self.__setattr__(n, self.get_measure(t))
