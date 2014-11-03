@@ -138,7 +138,7 @@ def send_data_to_server():
                 hub.config_write()
 
         # Update last updated in config file
-        timestamp = int(time.mktime(dt.utcnow().timetuple()))
+        timestamp = calendar.timegm(dt.utcnow().timetuple())
         hub.last_updated = timestamp
         hub.config.set('hub', 'last_update', timestamp)
         hub.config_write()
