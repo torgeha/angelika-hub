@@ -5,7 +5,7 @@ import json
 
 class JsonPosting:
 
-    def post_file(self, file_to_post, username=None, password=None, token=None):
+    def post_file(self, file_to_post, username, password, token=None):
         """
         Tries to authenticate based on username/password if token is not provided.
         Posts provided file to API. THROES EXCEPTION! Must be handled!
@@ -35,7 +35,6 @@ class JsonPosting:
             # f = open("log.html", "w")
             # f.write(r.text)
             # f.close()
-
         return token
 
     def authenticate(self, username, password):
@@ -62,26 +61,6 @@ class JsonPosting:
         if not request.status_code == requests.codes.ok:
             request.raise_for_status() # If status code is not a 2xx, exception will be raised
             # TODO: Handle exception
-
-
-
-# Testing
-ps = JsonPosting()
-
-# print ps.post_file("test_observation.json", username="trd-hub-1", password="123")
-
-print ps.post_file("test_observation.json", token="6ac8a69bdac5eca659b983dce3b29255af9b00e6")
-
-"""
-payload = {"Observation" :{"hub_id": 1234},"Measurements":
-    [
-        {"date": 1413410400, "type": "steps", "unit":"steps", "value": 666},
-        {"date": 1413410400, "type": "soft", "unit": "s", "value": 600},
-        {"date": 1413496800, "type": "heart_rate", "unit": "bpm", "value": 150}
-    ]}
-"""
-
-#todo: map hub-> patient when receiving post Do this tomorrow
 
 
 #Todo: do something with this waRNING?

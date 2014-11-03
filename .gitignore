@@ -1,5 +1,6 @@
 #Default excludes
 res
+cache
 *.ang
 
 #Archive files
