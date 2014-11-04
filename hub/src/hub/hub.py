@@ -164,7 +164,7 @@ def schedule_send_server_data():
 
 
 def schedule_delete_old_data():
-    caching.delete_old_measurements(calendar.timegm(dt.utcnow().timetuple()))
+    caching.delete_old_measurements(calendar.timegm((dt.utcnow()-timedelta(days=7)).timetuple()))
     threading.Timer(60 * 60 * 12, schedule_delete_old_data)  # TODO make this into variable
 
 
