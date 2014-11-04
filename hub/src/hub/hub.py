@@ -28,6 +28,9 @@ class Hub():
         self.last_updated = self.config.getint('hub', 'last_update')
         self.password = self.config.get('hub', 'password')
         self.token = self.config.get('hub', 'token')
+        self.server_url = self.config.get('hub', 'server_url')
+        self.server_interval = self.config.get('hub', 'server_interval')
+        self.server_wait = self.config.get('hub', 'server_wait')
         self.sensors = []
         self.json_posting = JsonPosting()
         self.init_sensors()
@@ -105,13 +108,18 @@ class Hub():
 
 def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
+
+    if not filenames:
+        print "Nothing to send..."
+
     token = hub.token
+    server_url = hub.server_url
     try:
         for filename in filenames:
 
             print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
 
-            new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, token=token)
+            new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, server_url=server_url, token=token)
 
             if new_token != token:
                 hub.token = new_token
@@ -153,18 +161,16 @@ def schedule_get_sensor_data():
 
 def schedule_send_server_data():
     send_data_to_server()
-    threading.Timer(server_interval, schedule_send_server_data).start()
+    threading.Timer(int(hub.server_interval), schedule_send_server_data).start()
 
 
 def start_scheduler():
     schedule_get_sensor_data()
     # wait 20 seconds before sending data to server to allow for sensor to get data
-    threading.Timer(server_wait, schedule_send_server_data).start()
+    threading.Timer(int(hub.server_wait), schedule_send_server_data).start()
 
 
 if __name__ == "__main__":
     sensor_interval = 10
-    server_interval = 10
-    server_wait = 20  # seconds to wait from getting sensor data to sending data to server
     hub = Hub()
     start_scheduler()
