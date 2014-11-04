@@ -25,12 +25,13 @@ class JsonPosting:
             payload = json.load(json_file)
 
             # url = "http://127.0.0.1:8000/post-measurements/" # Remember trailing slash
-            url = server_url
+            url = server_url + "post-measurements/"
+
+            print url
 
             headers = {'content-type': 'application/json', 'Authorization': "Token " + token}
 
             r = requests.post(url, data=json.dumps(payload), headers=headers)
-            print "Boyz in da hood"
 
             print r.status_code
             print r.text
@@ -46,8 +47,9 @@ class JsonPosting:
         """
 
         # url = "http://127.0.0.1:8000/api-token-auth/" # Remember trailing slash
-        url = server_url
+        url = server_url + "api-token-auth/"
 
+        print url
 
         headers = {'content-type': 'application/json'}
 

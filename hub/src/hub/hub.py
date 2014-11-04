@@ -153,7 +153,7 @@ def send_data_to_server():
 def schedule_get_sensor_data(sensor):
     with lock:
         hub.get_sensor_data(sensor)
-        threading.Timer(sensor_interval), schedule_get_sensor_data, args=(sensor,)).start()
+        threading.Timer(sensor_interval, schedule_get_sensor_data, args=(sensor,)).start()
 
 
 def schedule_send_server_data():
