@@ -1,8 +1,8 @@
 import sys
 import calendar
-import inspect
 import caching
 import ConfigParser
+import threading
 from traceback import format_exc
 from os import chdir
 from datetime import datetime as dt, timedelta
@@ -22,7 +22,7 @@ class Hub():
         chdir('../../res')  # This is to access the res directory in hub
         self.config = ConfigParser.RawConfigParser()
         self.config.read(__config_file__)
-        self.hub_id = self.config.get('hub', 'hub_id') # Username
+        self.hub_id = self.config.get('hub', 'hub_id')  # Username
         self.last_updated = self.config.getint('hub', 'last_update')
         self.password = self.config.get('hub', 'password')
         self.token = self.config.get('hub', 'token')
@@ -37,11 +37,11 @@ class Hub():
         """
         print "Initializing sensors"
         for sensor in self.config.items('sensors'):
-            self.sensors.append(self.get_sensor(sensor[0]))
+            self.sensors.append(self.get_sensor_instance(sensor[0]))
             print "Initialized sensor: " + sensor[0] + "\n"
-            # TODO try to connect to ble sensors
+            # TODO try to connect to BLE sensors
 
-    def get_sensor(self, sensor_name):
+    def get_sensor_instance(self, sensor_name):
         """
         Takes a name to create a new sensor
         The sensor to be created depends on type of sensor, and it must subclass the sensor class
@@ -54,13 +54,6 @@ class Hub():
             sensor = WithingsPulseO2(sensor_name)
         sensor.last_updated = self.config.getint(sensor_name, 'last_update')
         return sensor
-
-    def search_for_sensors(self):
-        """
-        Searches for sensors and returns a list of BLE sensors
-        """
-        print "(not really) Searching for sensors ...\nNo sensors found\n"
-        # TODO: use gatttool lescan to search for BLE devices and return a list of them.
 
     def config_write(self):
         config_file = open(__config_file__, 'w')
@@ -83,7 +76,7 @@ class Hub():
             self.config.set(name, 'mac_address', mac_address)
             self.config.set(name, 'last_update', int(calendar.timegm((dt.utcnow()-timedelta(days=7)).timetuple())))
             self.config_write()
-            self.sensors.append(self.get_sensor(name))
+            self.sensors.append(self.get_sensor_instance(name))
         else:
             print "A sensor with that name already exists"
 
@@ -101,27 +94,15 @@ class Hub():
             start_time = dt.utcfromtimestamp(sensor.last_updated)
             measurements = sensor.get_all_measurements(start_time, end_time)
             if measurements:
+                print 'Caching measurements for', sensor.name
                 if caching.cache_measurements(sensor, measurements, self):
                     self.config.set(sensor.name, 'last_update', sensor.last_updated)
                     self.config_write()
         return measurements
 
 
-def print_help():
-    """
-    Prints what functions are allowed to use
-    """
-    print "Usage: action [arguments]: function"
-    for k, v in program_functions.iteritems():
-        args = inspect.getargspec(v).args
-        if args and args[0] == 'self':
-            del args[0]
-        print k + " " + str(args) + ": " + v.__name__
-
-
 def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
-
     token = hub.token
 
     # for filename in filenames:
@@ -152,47 +133,24 @@ def send_data_to_server():
         print format_exc()
 
 
+def schedule_get_sensor_data():
+    hub.get_all_sensor_data()
+    threading.Timer(sensor_interval, schedule_get_sensor_data).start()
 
 
-def main():
-    """
-    The main method of the hub. This is where the magic happens
-    """
-    while True:
-        raw_program_input = raw_input("angelika_hub_" + __version__ + "> ")
-        if raw_program_input == "" or raw_program_input == "exit":
-            break
-        program_input = str.split(raw_program_input, " ", 1)
-        program_function = program_functions.get(program_input[0])
-        if not program_function:
-            print "No such function\n"
-            print_help()
-            continue
-        arguments = []
-        if hasattr(program_function, 'im_class'):
-            if program_function.im_class == Hub:
-                arguments.append(hub)
-        try:
-            if len(program_input) > 1:
-                arguments += (str.split(program_input[1]))
-            if len(arguments) > 0:
-                program_function(*arguments)
-            else:
-                program_function()
-        except TypeError:
-            print "Error, probably wrong number of arguments"
-            print format_exc()
-    print "Terminating..."
-    # TODO: terminate hub
+def schedule_send_server_data():
+    send_data_to_server()
+    threading.Timer(server_interval, schedule_send_server_data).start()
+
+
+def start_scheduler():
+    schedule_get_sensor_data()
+    # wait 20 seconds before sending data to server to allow for sensor to get data
+    threading.Timer(20, schedule_send_server_data).start()
 
 
 if __name__ == "__main__":
-    global program_functions, hub
-    program_functions = {'s': Hub.search_for_sensors,
-                         'l': Hub.get_sensors,
-                         'a': Hub.add_sensor,
-                         'h': print_help,
-                         'g': Hub.get_all_sensor_data,
-                         'send': send_data_to_server}
+    sensor_interval = 10
+    server_interval = 10
     hub = Hub()
-    main()
+    start_scheduler()
