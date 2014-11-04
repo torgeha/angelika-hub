@@ -6,7 +6,9 @@ import threading
 from traceback import format_exc
 from os import chdir
 from datetime import datetime as dt, timedelta
+from requests import HTTPError, ConnectionError, Timeout, TooManyRedirects, RequestException
 from json_posting import JsonPosting
+
 
 sys.path.insert(0, '../sensors')
 from withings_pulseo2 import WithingsPulseO2
@@ -104,8 +106,6 @@ class Hub():
 def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
     token = hub.token
-
-    # for filename in filenames:
     try:
         for filename in filenames:
 
@@ -124,14 +124,26 @@ def send_data_to_server():
         hub.config.set('hub', 'last_update', timestamp)
         hub.config_write()
 
-    except Exception:
-        # TODO catch better exceptions
-        # authenticate_before_posting(hub.hub_id, hub.password)
-        # TODO: Check if exception --> status code not authenticated, else handle accordingly
-
-        print "EXCEPTION when trying to post!"
+    # Only catching exceptions thrown by requests
+    except HTTPError:
+        # Ignore
         print format_exc()
 
+    except ConnectionError:
+        # Ignore
+        print format_exc()
+
+    except Timeout:
+        # Ignore
+        print format_exc()
+
+    except TooManyRedirects:
+        # Ignore
+        print format_exc()
+
+    except RequestException:  # Fallback if none of the above is caught
+        # Ignore
+        print format_exc()
 
 def schedule_get_sensor_data():
     hub.get_all_sensor_data()

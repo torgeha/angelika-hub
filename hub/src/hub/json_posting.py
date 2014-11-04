@@ -27,14 +27,10 @@ class JsonPosting:
             r = requests.post(url, data=json.dumps(payload), headers=headers)
 
             print r.status_code
+            print r.text
 
             self.raise_exception_if_bad_request(r)
 
-            #For testing
-            # Create log file with response, for debugging
-            # f = open("log.html", "w")
-            # f.write(r.text)
-            # f.close()
         return token
 
     def authenticate(self, username, password):
@@ -60,10 +56,3 @@ class JsonPosting:
     def raise_exception_if_bad_request(self, request):
         if not request.status_code == requests.codes.ok:
             request.raise_for_status() # If status code is not a 2xx, exception will be raised
-            # TODO: Handle exception
-
-
-#Todo: do something with this waRNING?
-#TODO: to fix warning, set timezone. But is the time in utc or should it be converted before setting tzinfo=<UTC> ???
-
-#RuntimeWarning: DateTimeField Measurement.time received a naive datetime (2014-10-16 22:00:00) while time zone support is active.
