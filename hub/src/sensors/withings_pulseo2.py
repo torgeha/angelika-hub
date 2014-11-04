@@ -15,10 +15,10 @@ class WithingsPulseO2(Sensor):
         config = ConfigParser.RawConfigParser()
         # Tries to access the res directory in hub
         try:
-            config.read('oauth_pulse02.txt')
+            config.read('oauth_pulseO2.txt')
             config.get('keys', 'oauth_token')
         except ConfigParser.NoSectionError:
-            config.read('../../res/oauth_pulse02.txt')
+            config.read('../../res/oauth_pulseO2.txt')
 
         access_token = config.get('keys', 'oauth_token')
         access_token_secret = config.get('keys', 'oauth_token_secret')
