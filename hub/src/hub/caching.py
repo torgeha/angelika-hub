@@ -55,6 +55,14 @@ def get_old_measurements(last_update):
     return files_not_sent
 
 
+def delete_old_measurements(timestamp):
+    filenames = next(os.walk(__filepath__))[2]
+    for filename in filenames:
+        date = int(filename[0:filename.index('_')])
+        if date < timestamp:
+            os.remove(__filepath__ + '/' + filename)
+
+
 def cache_measurements(sensor, measurements, hub):
     measurement_dictionaries = measurements_to_dictionaries(measurements)
     return write_measurements_to_file(sensor, measurement_dictionaries, hub)

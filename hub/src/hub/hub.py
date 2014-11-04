@@ -82,24 +82,20 @@ class Hub():
         else:
             print "A sensor with that name already exists"
 
-    def get_sensors(self):
-        """
-        This function returns a list of the currently connected sensors
-        @return:
-        """
-        print "sensors:" + str(self.sensors)
-        return self.sensors
+    def get_sensor_data(self, sensor):
+        end_time = dt.utcnow()
+        start_time = dt.utcfromtimestamp(sensor.last_updated)
+        measurements = sensor.get_all_measurements(start_time, end_time)
+        if measurements:
+            print 'Caching measurements for', sensor.name
+            if caching.cache_measurements(sensor, measurements, self):
+                self.config.set(sensor.name, 'last_update', sensor.last_updated)
+                self.config_write()
+        return measurements
 
     def get_all_sensor_data(self):
-        end_time = dt.utcnow()
         for sensor in self.sensors:
-            start_time = dt.utcfromtimestamp(sensor.last_updated)
-            measurements = sensor.get_all_measurements(start_time, end_time)
-            if measurements:
-                print 'Caching measurements for', sensor.name
-                if caching.cache_measurements(sensor, measurements, self):
-                    self.config.set(sensor.name, 'last_update', sensor.last_updated)
-                    self.config_write()
+            measurements = self.get_sensor_data(sensor)
         return measurements
 
 
@@ -146,20 +142,29 @@ def send_data_to_server():
         print format_exc()
 
 
-def schedule_get_sensor_data():
-    hub.get_all_sensor_data()
-    threading.Timer(sensor_interval, schedule_get_sensor_data).start()
+def schedule_get_sensor_data(sensor):
+    with lock:
+        hub.get_sensor_data(sensor)
+        threading.Timer(sensor_interval, schedule_get_sensor_data, args=(sensor,)).start()
 
 
 def schedule_send_server_data():
-    send_data_to_server()
-    threading.Timer(server_interval, schedule_send_server_data).start()
+    with lock:
+        send_data_to_server()
+        threading.Timer(server_interval, schedule_send_server_data).start()
+
+
+def schedule_delete_old_data():
+    caching.delete_old_measurements(calendar.timegm(dt.utcnow().timetuple()))
+    threading.Timer(60 * 60 * 12, schedule_delete_old_data)  # TODO make this into variable
 
 
 def start_scheduler():
-    schedule_get_sensor_data()
+    for sensor in hub.sensors:
+        schedule_get_sensor_data(sensor)
     # wait 20 seconds before sending data to server to allow for sensor to get data
     threading.Timer(server_wait, schedule_send_server_data).start()
+    schedule_delete_old_data()
 
 
 if __name__ == "__main__":
@@ -167,4 +172,5 @@ if __name__ == "__main__":
     server_interval = 10
     server_wait = 20  # seconds to wait from getting sensor data to sending data to server
     hub = Hub()
+    lock = threading.RLock()
     start_scheduler()
