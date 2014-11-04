@@ -29,8 +29,8 @@ class Hub():
         self.password = self.config.get('hub', 'password')
         self.token = self.config.get('hub', 'token')
         self.server_url = self.config.get('hub', 'server_url')
-        self.server_interval = self.config.get('hub', 'server_interval')
-        self.server_wait = self.config.get('hub', 'server_wait')
+        self.server_interval = self.config.getint('hub', 'server_interval')
+        self.server_wait = self.config.getint('hub', 'server_wait')
         self.sensors = []
         self.json_posting = JsonPosting()
         self.init_sensors()
@@ -153,14 +153,14 @@ def send_data_to_server():
 def schedule_get_sensor_data(sensor):
     with lock:
         hub.get_sensor_data(sensor)
-        threading.Timer(int(hub.server_interval), schedule_get_sensor_data, args=(sensor,)).start()
+        threading.Timer(sensor_interval), schedule_get_sensor_data, args=(sensor,)).start()
 
 
 def schedule_send_server_data():
     
     with lock:
         send_data_to_server()
-        threading.Timer(int(hub.server_interval), schedule_send_server_data).start()
+        threading.Timer(hub.server_interval, schedule_send_server_data).start()
 
 
 def schedule_delete_old_data():
@@ -172,11 +172,12 @@ def start_scheduler():
     for sensor in hub.sensors:
         schedule_get_sensor_data(sensor)
     # wait 20 seconds before sending data to server to allow for sensor to get data
-    threading.Timer(int(hub.server_wait), schedule_send_server_data).start()
+    threading.Timer(hub.server_wait, schedule_send_server_data).start()
     schedule_delete_old_data()
 
 
-if __name__ == "__main__
+if __name__ == "__main__":
+    sensor_interval = 10
     hub = Hub()
     lock = threading.RLock()
     start_scheduler()
