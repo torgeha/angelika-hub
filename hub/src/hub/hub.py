@@ -145,6 +145,7 @@ def send_data_to_server():
         # Ignore
         print format_exc()
 
+
 def schedule_get_sensor_data():
     hub.get_all_sensor_data()
     threading.Timer(sensor_interval, schedule_get_sensor_data).start()
@@ -158,11 +159,12 @@ def schedule_send_server_data():
 def start_scheduler():
     schedule_get_sensor_data()
     # wait 20 seconds before sending data to server to allow for sensor to get data
-    threading.Timer(20, schedule_send_server_data).start()
+    threading.Timer(server_wait, schedule_send_server_data).start()
 
 
 if __name__ == "__main__":
     sensor_interval = 10
     server_interval = 10
+    server_wait = 20  # seconds to wait from getting sensor data to sending data to server
     hub = Hub()
     start_scheduler()
