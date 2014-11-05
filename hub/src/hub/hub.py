@@ -3,8 +3,9 @@ import calendar
 import caching
 import ConfigParser
 import threading
+import interactive_prompt
 from traceback import format_exc
-from os import chdir
+import os
 from datetime import datetime as dt, timedelta
 from requests import HTTPError, ConnectionError, Timeout, TooManyRedirects, RequestException
 from json_posting import JsonPosting
@@ -21,7 +22,6 @@ __config_file__ = 'hub_config.txt'
 
 class Hub():
     def __init__(self):
-        chdir('../../res')  # This is to access the res directory in hub
         self.config = ConfigParser.RawConfigParser()
         self.config.read(__config_file__)
         self.hub_id = self.config.get('hub', 'hub_id')  # Username
@@ -40,7 +40,6 @@ class Hub():
         Initializes and connects to the sensors of this hub
         @return: A list of active sensors that can be interfaced with
         """
-        print "Initializing sensors"
         for sensor in self.config.items('sensors'):
             self.sensors.append(self.get_sensor_instance(sensor[0]))
             print "Initialized sensor: " + sensor[0] + "\n"
@@ -112,11 +111,8 @@ def send_data_to_server():
     server_url = hub.server_url
     try:
         for filename in filenames:
-
             print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
-
             new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, server_url=server_url, token=token)
-
             if new_token != token:
                 hub.token = new_token
                 hub.config.set('hub', 'token', new_token)
@@ -157,7 +153,6 @@ def schedule_get_sensor_data(sensor):
 
 
 def schedule_send_server_data():
-    
     with lock:
         send_data_to_server()
         threading.Timer(hub.server_interval, schedule_send_server_data).start()
@@ -176,8 +171,74 @@ def start_scheduler():
     schedule_delete_old_data()
 
 
+def config_set(config, section, option):
+    value = raw_input('Enter ' + option + ': ')
+    config.set(section, option, value)
+
+
+def create_new_config_file(filename):
+    f = open(filename, 'w')
+    config = ConfigParser.RawConfigParser()
+    config.read(filename)
+    config.add_section('hub')
+    config.add_section('sensors')
+    for option in ['hub_id', 'password', 'server_url', 'server_interval', 'server_wait']:
+        config_set(config, 'hub', option)
+    config.set('hub', 'last_update', calendar.timegm(dt.utcnow().timetuple()))
+    config.set('hub', 'token', '')
+
+    server_url = config.get('hub', 'server_url')
+    if server_url[-1] != '/':
+        new_url = (server_url + '/')
+        config.set('hub', 'server_url', new_url)
+    config.write(f)
+    f.close()
+
+
+def check_configuration():
+    os.chdir(os.path.dirname(__file__))
+    cache_path = "../../cache"
+    res_path = "../../res"
+    for path in [res_path, cache_path]:
+        if not os.path.isdir(path):
+            os.makedirs(path)
+    os.chdir(res_path)
+    if not os.path.exists(__config_file__):
+        print 'No config, making it'
+        interactive_prompt.create_new_config_file(__config_file__)
+        # TODO create config file!
+
+    else:
+        config = ConfigParser.RawConfigParser()
+        config.read(__config_file__)
+        for section in ['hub', 'sensors']:
+            if not config.has_section(section):
+                print 'Config file corrupted, please reconfigurate it'
+                interactive_prompt.create_new_config_file(__config_file__)
+                break
+        config.read(__config_file__)
+        options = ['hub_id', 'password', 'last_update', 'server_url', 'server_interval', 'server_wait', 'token']
+        missing_options = [option for option in config.items('hub') if option[0] not in options]
+        if missing_options:
+            print 'missing:', missing_options
+            print 'Config file corrupted, please reconfigurate it'
+            interactive_prompt.create_new_config_file(__config_file__)
+        config.read(__config_file__)
+    config.read(__config_file__)
+    return True
+
+
+def check_for_sensors(a_hub):
+    if not a_hub.sensors:
+        print 'No sensors found, please add a sensor'
+        sensor_name = raw_input('Sensor name: ').lower()
+        sensor_type = raw_input('Sensor type: ')
+        a_hub.add_sensor(sensor_name, sensor_type)
+
 if __name__ == "__main__":
-    sensor_interval = 10
+    sensor_interval = 10  # TODO get this into the config some way
+    check_configuration()
     hub = Hub()
+    check_for_sensors(hub)
     lock = threading.RLock()
     start_scheduler()
