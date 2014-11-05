@@ -10,7 +10,6 @@ Scripts to be run on the hub for project Angelika - health tracking.
 ### Setup hub with the [Withings Pulse](http://www.withings.com/eu/withings-pulse.html).
 * `cd withings/`
 * `python setup.py install`
-* Make sure to create directories `res/` and `cache/` inside the `hub/` directory. 
 * In `res/` create `oauth_pulseO2.txt` with this structure:
 
    [keys]  
@@ -20,6 +19,4 @@ Scripts to be run on the hub for project Angelika - health tracking.
    oauth_token_secret=  
    user_id=  
 
-* In `res/` `create hub_config.txt`.
-
-Everything should now work, run `hub.py`
+When running `hub.py` for the first time, the prompt will ask for configuration information. This can be edited later in `res/hub_config.txt`.
