@@ -3,7 +3,6 @@ import calendar
 import caching
 import ConfigParser
 import threading
-import interactive_prompt
 from traceback import format_exc
 import os
 from datetime import datetime as dt, timedelta
