@@ -77,7 +77,7 @@ class Hub():
             self.config.add_section(name)
             self.config.set(name, 'type', sensor_type)
             self.config.set(name, 'mac_address', mac_address)
-            self.config.set(name, 'last_update', int(calendar.timegm((dt.utcnow()-timedelta(days=7)).timetuple())))
+            self.config.set(name, 'last_update', int(calendar.timegm(dt.utcnow().timetuple())))
             self.config_write()
             self.sensors.append(self.get_sensor_instance(name))
         else:
@@ -112,10 +112,9 @@ def send_data_to_server():
         for filename in filenames:
             print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
             new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, server_url=server_url, token=token)
+
             if new_token != token:
-                hub.token = new_token
-                hub.config.set('hub', 'token', new_token)
-                hub.config_write()
+                set_token(new_token)
 
         # Update last updated in config file
         timestamp = calendar.timegm(dt.utcnow().timetuple())
@@ -124,9 +123,16 @@ def send_data_to_server():
         hub.config_write()
 
     # Only catching exceptions thrown by requests
-    except HTTPError:
+    except HTTPError as e:
         # Ignore
         print format_exc()
+
+        # Handle 401 unauthorized, probably because token is outdated.
+        # Delete it, effectively forcing a new authentication.
+        if e.response.status_code == 401:
+            print "Deleting token.."
+
+            set_token("")
 
     except ConnectionError:
         # Ignore
@@ -144,6 +150,10 @@ def send_data_to_server():
         # Ignore
         print format_exc()
 
+def set_token(token):
+    hub.token = token
+    hub.config.set('hub', 'token', token)
+    hub.config_write()
 
 def schedule_get_sensor_data(sensor):
     with lock:
@@ -202,18 +212,18 @@ def check_configuration():
         if not os.path.isdir(path):
             os.makedirs(path)
     os.chdir(res_path)
+    config = ConfigParser.RawConfigParser()
     if not os.path.exists(__config_file__):
         print 'No config, making it'
-        interactive_prompt.create_new_config_file(__config_file__)
+        create_new_config_file(__config_file__)
         # TODO create config file!
 
     else:
-        config = ConfigParser.RawConfigParser()
         config.read(__config_file__)
         for section in ['hub', 'sensors']:
             if not config.has_section(section):
                 print 'Config file corrupted, please reconfigurate it'
-                interactive_prompt.create_new_config_file(__config_file__)
+                create_new_config_file(__config_file__)
                 break
         config.read(__config_file__)
         options = ['hub_id', 'password', 'last_update', 'server_url', 'server_interval', 'server_wait', 'token']
@@ -221,7 +231,7 @@ def check_configuration():
         if missing_options:
             print 'missing:', missing_options
             print 'Config file corrupted, please reconfigurate it'
-            interactive_prompt.create_new_config_file(__config_file__)
+            create_new_config_file(__config_file__)
         config.read(__config_file__)
     config.read(__config_file__)
     return True
