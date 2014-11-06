@@ -8,6 +8,7 @@ import os
 from datetime import datetime as dt, timedelta
 from requests import HTTPError, ConnectionError, Timeout, TooManyRedirects, RequestException
 from json_posting import JsonPosting
+from logger import log_to_console
 
 
 sys.path.insert(0, '../sensors')
@@ -41,7 +42,7 @@ class Hub():
         """
         for sensor in self.config.items('sensors'):
             self.sensors.append(self.get_sensor_instance(sensor[0]))
-            print "Initialized sensor: " + sensor[0] + "\n"
+            log_to_console("Initialized sensor: " + sensor[0])
             # TODO try to connect to BLE sensors
 
     def get_sensor_instance(self, sensor_name):
@@ -71,7 +72,8 @@ class Hub():
         @param mac_address: The MAC address of the sensor
         @return: True if sensor was successfully added to the list, false otherwise
         """
-        print "Adding sensor: " + name + ", type: " + sensor_type + ', MAC address: ' + str(mac_address)
+        log_str = "Adding sensor: " + name + ", type: " + sensor_type + ', MAC address: ' + str(mac_address)
+        log_to_console(log_str)
         if not [s for s in self.sensors if s.name == name]:
             self.config.set('sensors', name, sensor_type)
             self.config.add_section(name)
@@ -81,14 +83,15 @@ class Hub():
             self.config_write()
             self.sensors.append(self.get_sensor_instance(name))
         else:
-            print "A sensor with that name already exists"
+            log_to_console("A sensor with that name already exists")
 
     def get_sensor_data(self, sensor):
         end_time = dt.utcnow()
         start_time = dt.utcfromtimestamp(sensor.last_updated)
         measurements = sensor.get_all_measurements(start_time, end_time)
         if measurements:
-            print 'Caching measurements for', sensor.name
+            log_str = 'Caching measurements for ' + sensor.name
+            log_to_console(log_str)
             if caching.cache_measurements(sensor, measurements, self):
                 self.config.set(sensor.name, 'last_update', sensor.last_updated)
                 self.config_write()
@@ -104,13 +107,16 @@ def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
 
     if not filenames:
-        print "Nothing to send..."
+        log_to_console("Nothing to send...")
 
     token = hub.token
     server_url = hub.server_url
     try:
         for filename in filenames:
-            print "sending file: \"" + filename + "\" to server"  # TODO: remove this temporary print
+            log_str = "sending file: \"" + filename + "\" to server"
+
+            log_to_console(log_str)
+
             new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, server_url=server_url, token=token)
 
             if new_token != token:
@@ -125,30 +131,30 @@ def send_data_to_server():
     # Only catching exceptions thrown by requests
     except HTTPError as e:
         # Ignore
-        print format_exc()
+        log_to_console(format_exc())
 
         # Handle 401 unauthorized, probably because token is outdated.
         # Delete it, effectively forcing a new authentication.
         if e.response.status_code == 401:
-            print "Deleting token.."
+            log_to_console("Deleting token...")
 
             set_token("")
 
     except ConnectionError:
         # Ignore
-        print format_exc()
+        log_to_console(format_exc())
 
     except Timeout:
         # Ignore
-        print format_exc()
+        log_to_console(format_exc())
 
     except TooManyRedirects:
         # Ignore
-        print format_exc()
+        log_to_console(format_exc())
 
     except RequestException:  # Fallback if none of the above is caught
         # Ignore
-        print format_exc()
+        log_to_console(format_exc())
 
 def set_token(token):
     hub.token = token
@@ -205,7 +211,8 @@ def create_new_config_file(filename):
 
 
 def check_configuration():
-    os.chdir(os.path.dirname(__file__))
+    # os.chdir(os.path.dirname(__file__))
+    os.chdir(os.getcwd())
     cache_path = "../../cache"
     res_path = "../../res"
     for path in [res_path, cache_path]:
@@ -214,23 +221,22 @@ def check_configuration():
     os.chdir(res_path)
     config = ConfigParser.RawConfigParser()
     if not os.path.exists(__config_file__):
-        print 'No config, making it'
+        log_to_console('No config file, making it')
         create_new_config_file(__config_file__)
-        # TODO create config file!
 
     else:
         config.read(__config_file__)
         for section in ['hub', 'sensors']:
             if not config.has_section(section):
-                print 'Config file corrupted, please reconfigurate it'
+                log_to_console('Config file corrupted, please reconfigure it')
                 create_new_config_file(__config_file__)
                 break
         config.read(__config_file__)
         options = ['hub_id', 'password', 'last_update', 'server_url', 'server_interval', 'server_wait', 'token']
         missing_options = [option for option in config.items('hub') if option[0] not in options]
         if missing_options:
-            print 'missing:', missing_options
-            print 'Config file corrupted, please reconfigurate it'
+            log_to_console('missing: ', missing_options)
+            log_to_console('Config file corrupted, please reconfigure it')
             create_new_config_file(__config_file__)
         config.read(__config_file__)
     config.read(__config_file__)
@@ -239,7 +245,7 @@ def check_configuration():
 
 def check_for_sensors(a_hub):
     if not a_hub.sensors:
-        print 'No sensors found, please add a sensor'
+        log_to_console('No sensors found, please add a sensor')
         sensor_name = raw_input('Sensor name: ').lower()
         sensor_type = raw_input('Sensor type: ')
         a_hub.add_sensor(sensor_name, sensor_type)

@@ -1,6 +1,8 @@
 
 import requests
 import json
+from logger import log_to_console
+from datetime import datetime as dt
 
 
 class JsonPosting:
@@ -12,7 +14,7 @@ class JsonPosting:
         """
 
         if not server_url:
-            print "No server_url provided"
+            log_to_console("No server_url provided")
             raise requests.ConnectionError
 
         # If no token is given, username and password is needed to provide new token
@@ -27,14 +29,14 @@ class JsonPosting:
             # url = "http://127.0.0.1:8000/post-measurements/" # Remember trailing slash
             url = server_url + "post-measurements/"
 
-            print url
+            log_to_console("Posting to " + url)
 
             headers = {'content-type': 'application/json', 'Authorization': "Token " + token}
 
             r = requests.post(url, data=json.dumps(payload), headers=headers)
 
-            print r.status_code
-            print r.text
+            log_to_console("Status_code " + str(r.status_code))
+            log_to_console("Response " + r.text)
 
             self.raise_exception_if_bad_request(r)
 
@@ -49,18 +51,16 @@ class JsonPosting:
         # url = "http://127.0.0.1:8000/api-token-auth/" # Remember trailing slash
         url = server_url + "api-token-auth/"
 
-        print url
+        log_to_console("Authenticating to " + url)
 
         headers = {'content-type': 'application/json'}
 
         r = requests.post(url, data=json.dumps({"username": username, "password": password}), headers=headers)
 
-        print r.status_code
+        log_to_console("Status_code " + str(r.status_code))
 
         self.raise_exception_if_bad_request(r)
         parsed_response = json.loads(r.text)
-
-        print "Token returned: ", parsed_response['token']
 
         return parsed_response['token']
 
