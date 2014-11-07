@@ -18,6 +18,8 @@ today = datetime.date.today()
 
 ipaddr = sys.argv[1]
 
+print ipaddr
+
 mail_content = "My IP is: "
 my_ip = mail_content + ipaddr
 msg = MIMEText(my_ip)
