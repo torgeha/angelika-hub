@@ -17,11 +17,15 @@ smtpserver.login(gmail_user, gmail_password)
 today = datetime.date.today()
 
 ipaddr = sys.argv[1]
+global_ip_addr = "Not found"
+
+if len(sys.argv) > 2:
+  global_ip_addr = sys.argv[2]
 
 print ipaddr
 
 mail_content = "My IP is: "
-my_ip = mail_content + ipaddr
+my_ip = mail_content + ipaddr + "\n" + "Global IP: " + global_ip_addr
 msg = MIMEText(my_ip)
 subject_cont = "AngelikaRasp's IP on "
 subject_date = today.strftime('%b %d %Y')
