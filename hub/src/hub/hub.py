@@ -1,19 +1,14 @@
-import sys
 import calendar
 import caching
 import ConfigParser
 import threading
-from traceback import format_exc
 import os
+from traceback import format_exc
 from datetime import datetime as dt, timedelta
 from requests import HTTPError, ConnectionError, Timeout, TooManyRedirects, RequestException
 from json_posting import JsonPosting
 from logger import log_to_console
-
-
-sys.path.insert(0, '../sensors')
-from withings_pulseo2 import WithingsPulseO2
-
+from sensor_factory import SensorFactory
 
 __author__ = 'David'
 __version__ = '0.0.1'
@@ -33,6 +28,7 @@ class Hub():
         self.server_wait = self.config.getint('hub', 'server_wait')
         self.sensors = []
         self.json_posting = JsonPosting()
+        self.sensor_factory = SensorFactory()
         self.init_sensors()
 
     def init_sensors(self):
@@ -41,23 +37,9 @@ class Hub():
         @return: A list of active sensors that can be interfaced with
         """
         for sensor in self.config.items('sensors'):
-            self.sensors.append(self.get_sensor_instance(sensor[0]))
+            self.sensors.append(self.sensor_factory.get_sensor_instance(sensor[0], self.config))
             log_to_console("Initialized sensor: " + sensor[0])
             # TODO try to connect to BLE sensors
-
-    def get_sensor_instance(self, sensor_name):
-        """
-        Takes a name to create a new sensor
-        The sensor to be created depends on type of sensor, and it must subclass the sensor class
-        @param sensor_name: The name of the sensor
-        @return: The sensor object for this sensor
-        """
-        sensor_type = self.config.get(sensor_name, 'type')
-        mac_address = self.config.get(sensor_name, 'mac_address')
-        if sensor_type == 'withings_pulseo2':
-            sensor = WithingsPulseO2(sensor_name)
-        sensor.last_updated = self.config.getint(sensor_name, 'last_update')
-        return sensor
 
     def config_write(self):
         config_file = open(__config_file__, 'w')
@@ -81,7 +63,7 @@ class Hub():
             self.config.set(name, 'mac_address', mac_address)
             self.config.set(name, 'last_update', int(calendar.timegm(dt.utcnow().timetuple())))
             self.config_write()
-            self.sensors.append(self.get_sensor_instance(name))
+            self.sensors.append(self.sensor_factory.get_sensor_instance(name), self.config)
         else:
             log_to_console("A sensor with that name already exists")
 
