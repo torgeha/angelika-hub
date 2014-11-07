@@ -193,9 +193,9 @@ def create_new_config_file(filename):
 
 
 def check_configuration():
-    # os.chdir(os.path.dirname(__file__))
-    print os.getcwd()
-    os.chdir(os.getcwd())
+    os.chdir(os.path.dirname(__file__))
+    # print os.getcwd()
+    # os.chdir(os.getcwd())
 
 
     cache_path = "../../cache"
