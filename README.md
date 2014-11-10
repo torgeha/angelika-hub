@@ -8,6 +8,9 @@ Scripts to be run on the hub for project Angelika - health tracking.
 ## Setup
 
 ### Setup hub with the [Withings Pulse](http://www.withings.com/eu/withings-pulse.html).
+* Create a virtual environment: `virtualenv env`
+* Activate it: `. env/bin/activate`
+* `python setup.py install`
 * `cd withings/`
 * `python setup.py install`
 * In `res/` create `oauth_pulseO2.txt` with this structure:
