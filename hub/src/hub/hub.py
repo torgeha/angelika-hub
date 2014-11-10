@@ -63,7 +63,7 @@ class Hub():
             self.config.set(name, 'mac_address', mac_address)
             self.config.set(name, 'last_update', int(calendar.timegm(dt.utcnow().timetuple())))
             self.config_write()
-            self.sensors.append(self.sensor_factory.get_sensor_instance(name), self.config)
+            self.sensors.append(self.sensor_factory.get_sensor_instance(name, self.config))
         else:
             log_to_console("A sensor with that name already exists")
 
