@@ -3,6 +3,7 @@ import caching
 import ConfigParser
 import threading
 import os
+import sys
 from traceback import format_exc
 from datetime import datetime as dt, timedelta
 from requests import HTTPError, ConnectionError, Timeout, TooManyRedirects, RequestException
@@ -237,6 +238,7 @@ def check_for_sensors(a_hub):
 
 if __name__ == "__main__":
     sensor_interval = 10  # TODO get this into the config some way
+    sys.stderr = open('stacktrace.txt', 'w')
     check_configuration()
     hub = Hub()
     check_for_sensors(hub)
