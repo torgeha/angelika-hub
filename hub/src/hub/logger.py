@@ -5,20 +5,22 @@ from datetime import datetime as dt
 """
 Preferred way to print to console and log file. UTC-date is prepended.
 """
+        
+import logging
+import logging.handlers
+from datetime import datetime as dt
+   
+log_filename = 'console_log.log'
+h_logger = logging.getLogger('hub_logger')
+h_logger.setLevel(logging.INFO)
+handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
+h_logger.addHandler(handler)
 
 def log_to_console(message):
     now = dt.utcnow()
     what_to_log =  "[UTC: " + now.strftime("%Y-%m-%d %H:%M:%S") + "] - " + message
-    print what_to_log
-    
-    log_filename = 'console_log.log'
-    
-    hub_logger = logging.getLogger('hub_logger')
-    hub_logger.setLevel(logging.INFO)
-    
-    # A log file does not exceed 1MB and 5 files are kept before deleting them.
-    handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
-    hub_logger.addHandler(handler)
-    
-    hub_logger.info(what_to_log)
-    
+    print(what_to_log)
+        
+    h_logger.info(what_to_log)
+
+        
