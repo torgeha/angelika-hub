@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from setuptools import setup
 
 setup(
@@ -11,7 +10,6 @@ setup(
     license = "MIT License",
     packages = ['withings'],
     install_requires = ['requests', 'requests-oauthlib'],
-    scripts=['bin/withings'],
     keywords="withings",
     zip_safe = True
 )
