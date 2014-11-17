@@ -9,13 +9,15 @@ class ConfigGui:
     def __init__(self, filename):
         self.filename = filename
         self.master = tk.Tk()
-        self.fields = [('Hub ID', ""), ('Password', ""), ('Server URL', "https://api.angelika.care/"),
+        self.fields = [('Hub ID', ""), ('Password', ""),
+                       ('Server URL', "https://api.angelika.care/"),
                        ('Server interval', "10"), ('Server wait', "15")]
         self.entries = []
         for i in range(0, len(self.fields)):
             self.entries.append(self.new_input_field(self.fields[i][0], i, self.fields[i][1]))
         self.status_text = tk.StringVar()
-        tk.Button(self.master, text="OK", command=self.ok).grid(row=len(self.fields), sticky=(tk.E, tk.W))
+        tk.Button(self.master, text="OK", command=self.ok).grid(row=len(self.fields),
+                                                                sticky=(tk.E, tk.W))
         status_label = tk.Label(self.master, textvariable=self.status_text)
         status_label.grid(row=len(self.fields), column=1, sticky=(tk.E, tk.W))
         self.master.wait_window()
@@ -69,6 +71,7 @@ class ConfigGui:
             self.write_config()
         else:
             self.status_text.set('Error')
+
 
 if __name__ == "__main__":
     ConfigGui("hub_config.txt")

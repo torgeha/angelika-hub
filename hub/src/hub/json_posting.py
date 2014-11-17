@@ -1,12 +1,9 @@
-
 import requests
 import json
 from logger import log_to_console
-from datetime import datetime as dt
 
 
 class JsonPosting:
-
     def post_file(self, file_to_post, username, password, server_url=None, token=None):
         """
         Tries to authenticate based on username/password if token is not provided.
@@ -44,8 +41,8 @@ class JsonPosting:
 
     def authenticate(self, username, password, server_url):
         """
-        Tries to authenticate the hub based on username and password. Raises exception if response status code is not
-        2xx. I.e username or password is wrong or serverside error.
+        Tries to authenticate the hub based on username and password. Raises exception if response
+        status code is not 2xx. I.e username or password is wrong or serverside error.
         """
 
         # url = "http://127.0.0.1:8000/api-token-auth/" # Remember trailing slash
@@ -55,7 +52,8 @@ class JsonPosting:
 
         headers = {'content-type': 'application/json'}
 
-        r = requests.post(url, data=json.dumps({"username": username, "password": password}), headers=headers)
+        r = requests.post(url, data=json.dumps({"username": username, "password": password}),
+                          headers=headers)
 
         log_to_console("Status_code " + str(r.status_code))
 
@@ -66,4 +64,4 @@ class JsonPosting:
 
     def raise_exception_if_bad_request(self, request):
         if not request.status_code == requests.codes.ok:
-            request.raise_for_status() # If status code is not a 2xx, exception will be raised
+            request.raise_for_status()  # If status code is not a 2xx, exception will be raised

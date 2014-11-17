@@ -55,7 +55,8 @@ class Hub():
         @param mac_address: The MAC address of the sensor
         @return: True if sensor was successfully added to the list, false otherwise
         """
-        log_str = "Adding sensor: " + name + ", type: " + sensor_type + ', MAC address: ' + str(mac_address)
+        log_str = "Adding sensor: " + name + ", type: " + sensor_type + ', MAC address: ' + str(
+            mac_address)
         log_to_console(log_str)
         if not [s for s in self.sensors if s.name == name]:
             self.config.set('sensors', name, sensor_type)
@@ -80,11 +81,6 @@ class Hub():
                 self.config_write()
         return measurements
 
-    def get_all_sensor_data(self):
-        for sensor in self.sensors:
-            measurements = self.get_sensor_data(sensor)
-        return measurements
-
 
 def send_data_to_server():
     filenames = caching.get_old_measurements(hub.last_updated)
@@ -100,7 +96,8 @@ def send_data_to_server():
 
             log_to_console(log_str)
 
-            new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password, server_url=server_url, token=token)
+            new_token = hub.json_posting.post_file(filename, hub.hub_id, hub.password,
+                                                   server_url=server_url, token=token)
 
             if new_token != token:
                 set_token(new_token)
@@ -139,10 +136,12 @@ def send_data_to_server():
         # Ignore
         log_to_console(format_exc())
 
+
 def set_token(token):
     hub.token = token
     hub.config.set('hub', 'token', token)
     hub.config_write()
+
 
 def schedule_get_sensor_data(sensor):
     with lock:
@@ -157,14 +156,14 @@ def schedule_send_server_data():
 
 
 def schedule_delete_old_data():
-    caching.delete_old_measurements(calendar.timegm((dt.utcnow()-timedelta(days=7)).timetuple()))
+    caching.delete_old_measurements(calendar.timegm((dt.utcnow() - timedelta(days=7)).timetuple()))
     threading.Timer(60 * 60 * 12, schedule_delete_old_data)  # TODO make this into variable
 
 
 def start_scheduler():
     for sensor in hub.sensors:
         schedule_get_sensor_data(sensor)
-    # wait 20 seconds before sending data to server to allow for sensor to get data
+        # wait 20 seconds before sending data to server to allow for sensor to get data
     threading.Timer(hub.server_wait, schedule_send_server_data).start()
     schedule_delete_old_data()
 
@@ -195,10 +194,6 @@ def create_new_config_file(filename):
 
 def check_configuration():
     os.chdir(os.path.dirname(__file__))
-    # print os.getcwd()
-    # os.chdir(os.getcwd())
-
-
     cache_path = "../../cache"
     res_path = "../../res"
     for path in [res_path, cache_path]:
@@ -218,10 +213,11 @@ def check_configuration():
                 create_new_config_file(__config_file__)
                 break
         config.read(__config_file__)
-        options = ['hub_id', 'password', 'last_update', 'server_url', 'server_interval', 'server_wait', 'token']
+        options = ['hub_id', 'password', 'last_update', 'server_url', 'server_interval',
+                   'server_wait', 'token']
         missing_options = [option for option in config.items('hub') if option[0] not in options]
         if missing_options:
-            log_to_console('missing: ', missing_options)
+            log_to_console('missing: ' + str(missing_options))
             log_to_console('Config file corrupted, please reconfigure it')
             create_new_config_file(__config_file__)
         config.read(__config_file__)
@@ -235,6 +231,7 @@ def check_for_sensors(a_hub):
         sensor_name = raw_input('Sensor name: ').lower()
         sensor_type = raw_input('Sensor type: ')
         a_hub.add_sensor(sensor_name, sensor_type)
+
 
 if __name__ == "__main__":
     sensor_interval = 10  # TODO get this into the config some way

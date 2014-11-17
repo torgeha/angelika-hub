@@ -6,8 +6,8 @@ from sensors import Sensor, Measurement
 
 class WithingsPulseO2(Sensor):
     MEASURE_TYPES = {11: 'heart_rate', 54: 'spo2'}
-    VALUE_UNITS = {11: 'bpm', 54: 'percent', 'steps': 'steps', 'distance': 'm', 'elevation': 'm', 'soft': 's',
-                   'moderate': 's', 'intense': 's', 'calories': 'kcal'}
+    VALUE_UNITS = {11: 'bpm', 54: 'percent', 'steps': 'steps', 'distance': 'm', 'elevation': 'm',
+                   'soft': 's', 'moderate': 's', 'intense': 's', 'calories': 'kcal'}
 
     def __init__(self, name):
         self._name = name
@@ -26,7 +26,8 @@ class WithingsPulseO2(Sensor):
         consumer_secret = config.get('keys', 'consumer_secret')
         user_id = config.get('keys', 'userid')
 
-        creds = WithingsCredentials(access_token, access_token_secret, consumer_key, consumer_secret, user_id)
+        creds = WithingsCredentials(access_token, access_token_secret, consumer_key,
+                                    consumer_secret, user_id)
         self.client = WithingsApi(creds)
 
     @property
@@ -53,17 +54,11 @@ class WithingsPulseO2(Sensor):
         measurements = []
         for activities in activity_group:
             for name, value in activities.activities.iteritems():
-                measurements.append(Measurement(name, value, self.VALUE_UNITS[name], activities.date))
+                measurements.append(
+                    Measurement(name, value, self.VALUE_UNITS[name], activities.date))
         for measures in measure_group:
             for m in measures.measures:
                 if self.MEASURE_TYPES.get(m['type']):
                     measurements.append(Measurement(self.MEASURE_TYPES[m['type']], m['value'],
                                                     self.VALUE_UNITS[m['type']], measures.date))
         return sorted(measurements, key=lambda measurement: measurement.date)
-
-
-
-
-
-
-

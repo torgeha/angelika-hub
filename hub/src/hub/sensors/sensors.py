@@ -26,5 +26,6 @@ class Measurement():
         self.date = date
 
     def __repr__(self):
-        return "Measurement at " + self.date.strftime('%Y-%m-%d') + ": type: " + str(self.m_type) + ", value:" + str(self.value)
+        return "Measurement at " + self.date.strftime('%Y-%m-%d') + ": type: " + str(
+            self.m_type) + ", value:" + str(self.value)
 

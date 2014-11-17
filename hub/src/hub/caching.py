@@ -11,7 +11,8 @@ __filepath__ = '../cache/'
 def measurements_to_dictionaries(measurements):
     measurement_list = []
     for m in measurements:
-        measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit, 'date': int(calendar.timegm(m.date.timetuple()))}
+        measurement = {'type': m.m_type, 'value': m.value, 'unit': m.unit,
+                       'date': int(calendar.timegm(m.date.timetuple()))}
         measurement_list.append(measurement)
     return measurement_list
 
@@ -40,7 +41,8 @@ def write_measurements_to_file(sensor, measurements, hub):
     utc_now = int(calendar.timegm(dt.utcnow().timetuple()))
     filename = __filepath__ + str(utc_now) + "_" + sensor.name + ".json"
     f = open(filename, 'w')
-    measurement_dictionary = {'Observation': {'hub_id': hub.hub_id}, 'Measurements': new_measurements}
+    measurement_dictionary = {'Observation': {'hub_id': hub.hub_id},
+                              'Measurements': new_measurements}
     json.dump(measurement_dictionary, f, indent=4, sort_keys=True)
     f.close()
     return True
@@ -52,7 +54,8 @@ def get_old_measurements(last_update):
     for filename in filenames:
         date = int(filename[0:filename.index('_')])
         if date > last_update:
-            files_not_sent.append(os.path.dirname(os.path.abspath(__filepath__ + filename)) + '/' + filename)
+            files_not_sent.append(
+                os.path.dirname(os.path.abspath(__filepath__ + filename)) + '/' + filename)
     return files_not_sent
 
 
